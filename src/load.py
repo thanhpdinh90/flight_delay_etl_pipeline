@@ -87,6 +87,10 @@ try:
                 )
             """, values)
 
+
+    # Count newly inserted records in this run
+    new_records = conn.total_changes
+
     # Save changes
     conn.commit()
 
@@ -98,6 +102,8 @@ try:
     print("SQL load completed successfully!")
     print(f"CSV records processed: {rows_read}")
     print(f"Total records in database: {total}")
+    print(f"New records inserted: {new_records}")
+    print(f"Duplicate records skipped: {rows_read - new_records}")
 
 finally:
     conn.close()
