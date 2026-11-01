@@ -6,6 +6,10 @@ on:
   schedule:
     - cron: '17 13 * * 1'
 
+
+permissions:
+  contents: write
+
 jobs:
   run-etl:
     runs-on: ubuntu-latest
@@ -13,6 +17,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Restore previous database
+        run: |
+          mkdir -p data
+          git fetch origin etl-data
+          git show origin/etl-data:database/flight_delays.db > data/flight_delays.db || rm -f data/flight_delays.db
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -37,3 +47,20 @@ jobs:
           name: flight-delay-database
           path: data/*.db
           if-no-files-found: error
+
+          
+      - name: Save database to data branch
+        run: |
+          git fetch origin etl-data
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp data/flight_delays.db /tmp/flight_delays.db
+          git checkout etl-data
+          mkdir -p database
+          cp /tmp/flight_delays.db database/flight_delays.db
+          git add database/flight_delays.db
+          if ! git diff --cached --quiet; then
+            git commit -m "Update flight database"
+            git push origin etl-data
+          fi
+
