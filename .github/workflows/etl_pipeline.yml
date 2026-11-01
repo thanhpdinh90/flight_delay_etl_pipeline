@@ -1,0 +1,39 @@
+
+name: Flight Delay ETL Pipeline
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 13 * * 1'
+
+jobs:
+  run-etl:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Extract flight data
+        run: python src/extract.py
+
+      - name: Transform flight data
+        run: python src/transform.py
+
+      - name: Load data into SQLite
+        run: python src/load.py
+
+      - name: Upload SQLite database
+        uses: actions/upload-artifact@v4
+        with:
+          name: flight-delay-database
+          path: data/*.db
+          if-no-files-found: error
